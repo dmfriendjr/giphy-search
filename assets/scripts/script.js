@@ -28,7 +28,7 @@ function spacesToAmpersands(targetString) {
 }
 
 function retrieveGifs(term) {
-	let queryString = `http://api.giphy.com/v1/gifs/search?&q=${term}&api_key=${apiKey}`
+	let queryString = `https://api.giphy.com/v1/gifs/search?&q=${term}&api_key=${apiKey}`
 	$.ajax({
 		url: queryString,
 		method: 'GET'
