@@ -4,7 +4,9 @@ class GiphySearch {
 		this.startingTermList =  ['dogs','cats','wolves','elephants','mice','rhinos','hippos','ants', 'german shepherd'];
 		this.searchTermList = [];
 		this.currentSearchTerm;
+		this.initialized = false;
 		this.searchOffset = 0;
+		this.resultCount;
 		this.populateButtons();	
 	}
 
@@ -16,6 +18,18 @@ class GiphySearch {
 
 		//Starting term list no longer needed
 		this.startingTermList = [];
+		this.initialized = true;
+		//Hide next/previous page buttons until search has been done
+		$('#next-page-button').hide();
+		$('#previous-page-button').show();
+	}
+
+	//Removes any special characters, spaces, etc. in string provided
+	processString(string) {
+		//Remove spaces and replace with concatenation
+		string = string.replace(' ', '+');
+		//Remove ampersands and replace with concatenation so it doesnt break query string
+		return string.replace('&', '+');
 	}
 
 	addNewButton(term) {
@@ -26,7 +40,7 @@ class GiphySearch {
 		}
 		
 		//Add term to list after formatting
-		let searchTerm = term.replace(' ', '+');
+		let searchTerm = this.processString(term);
 		this.searchTermList.push(searchTerm);
 		
 		//Create button for element and insert term and data-term 
@@ -49,6 +63,13 @@ class GiphySearch {
 
 		//Append button to HTML
 		$('#button-container').append(newButton);	
+		
+		//Check if initialization of starting buttons have been added
+		//doing a query for every button added to prevent making a ton of requests
+		//the user won't see
+		if (this.initialized) {
+			this.retrieveGifs(searchTerm);
+		}
 	}
 
 	retrieveGifs(term) {
@@ -68,7 +89,7 @@ class GiphySearch {
 	}
 
 	getPreviousPage() {
-		this.searchOffset -= 10;
+		this.searchOffset = Math.max(0,this.searchOffset-=10);
 		this.retrieveGifs(this.currentSearchTerm);
 	}
 
@@ -106,6 +127,23 @@ class GiphySearch {
 
 			$('#gif-container').append(newGifWrapper);	
 		});
+
+		//Store search result count
+		this.resultCount = responseList.pagination.total_count;
+
+		//Handle next/previous page buttons
+		if (this.searchOffset === 0) {
+			$('#previous-page-button').hide();
+		} else {
+			$('#previous-page-button').show();
+		}
+
+		if (this.searchOffset + 10 > this.resultCount) {
+			//At the end of the results, no next page
+			$('#next-page-button').hide();
+		} else {
+			$('#next-page-button').show();
+		}
 	}
 
 	toggleGifAnimation(element) {
@@ -138,7 +176,6 @@ $('#add-term-button').on('click', (event) => {
 	$('#term-input-field').val('');
 
 	searchApp.addNewButton(displayTerm);
-	searchApp.retrieveGifs(searchTerm);
 });
 
 $('#next-page-button').on('click', (event) => {
