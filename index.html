@@ -10,13 +10,21 @@
 	<title>Giphy Search</title>
 </head>
 <body>
-	<div class='navbar'>
-		<input type="text" placeholder='Enter Search' id='term-input-field'>
-		<input type="button" value='Add Button' id='add-term-button'>
-	</div>
-	<div id="button-container"></div>
-	<div id='gif-container'></div>
+	<nav class="navbar">
+		<h1 class='title-text'>Giphy Search</h2>
+	</nav>
 
+		<div class="content">
+		<form class='search-form'>
+			<input type="text" placeholder="Enter Search" id="term-input-field">
+			<input type="submit" value="Search" id="add-term-button">
+		</form>
+		<div id="button-container"></div>
+		<div id="gif-container"></div>
+
+		<input type="button" value="Previous Page" id="previous-page-button">
+		<input type="button" value="Next Page" id="next-page-button">
+		</div>
 	<script src="./assets/scripts/script.js"></script>
 </body>
 </html>
