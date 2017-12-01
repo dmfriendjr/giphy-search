@@ -6,6 +6,7 @@ class GiphySearch {
 		this.currentSearchTerm = "";
 		this.resultsPerPage = 10;
 		this.displayRatings = true;
+		this.autoplayGifs = false;
 		this.initialized = false;
 		this.searchOffset = 0;
 		this.resultCount;
@@ -54,6 +55,13 @@ class GiphySearch {
 				//Not storing ratings anywhere, have to re-request the gifs
 				this.retrieveGifs(this.currentSearchTerm);
 			}
+		});
+
+		$('#autoplay-gifs').change((event) => {
+			this.autoplayGifs = $(event.target).prop('checked');
+			$('.displayed-gif').each( (index, gif) => {
+				this.toggleGifAnimation(gif);	
+			});
 		});
 	}
 
@@ -155,7 +163,7 @@ class GiphySearch {
 			});
 
 			let newGif = $('<img>', {
-				src: gif.images.fixed_height_still.url,
+				src: this.autoplayGifs ? gif.images.fixed_height.url : gif.images.fixed_height_still.url,
 				'class': 'displayed-gif',
 				'alt': gif.title,
 				click: (event) => {
@@ -266,7 +274,7 @@ class GiphySearch {
 	toggleGifAnimation(element) {
 		let src = $(element).attr('src');
 
-		if (src.indexOf('_s.gif') === -1) {
+		if (src.indexOf('_s.gif') === -1 ) {
 			//This gif is animated, so stop animation
 			src = src.split('.gif');
 			src[0] += '_s.gif';
