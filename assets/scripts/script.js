@@ -7,6 +7,8 @@ class GiphySearch {
 		this.initialized = false;
 		this.searchOffset = 0;
 		this.resultCount;
+		this.numberOfPages;
+		this.currentPageNumber = 0;
 		this.populateButtons();	
 	}
 
@@ -21,13 +23,11 @@ class GiphySearch {
 		this.initialized = true;
 		//Hide next/previous page buttons until search has been done
 		$('#next-page-button').hide();
-		$('#previous-page-button').show();
+		$('#previous-page-button').hide();
 	}
 
-	//Removes any special characters, spaces, etc. in string provided
+	//Removes any special characters etc. in string provided
 	processString(string) {
-		//Remove spaces and replace with concatenation
-		string = string.replace(' ', '+');
 		//Remove ampersands and replace with concatenation so it doesnt break query string
 		return string.replace('&', '+');
 	}
@@ -43,9 +43,9 @@ class GiphySearch {
 		let searchTerm = this.processString(term);
 		this.searchTermList.push(searchTerm);
 		
-		//Create button for element and insert term and data-term 
+		//Create button for element and insert term display label and data-term 
 		let newButton = $(`
-			<div class='button-wrapper' data-term=${searchTerm}>
+			<div class='button-wrapper' data-term='${searchTerm}'>
 				<i class="fa fa-times-circle close-button" aria-hidden="true"></i>		
 				<p class='button-label'>${term}</p>
 			</div>`);
@@ -58,6 +58,9 @@ class GiphySearch {
 
 		//Add event listener for entire button to retrieve gifs for the button click
 		newButton.on('click', (event) => {
+				//Ensure page number and offset are reset
+				this.currentPageNumber = 0;
+				this.searchOffset = 0;
 				this.retrieveGifs($(event.target).attr('data-term'));	
 			});
 
@@ -88,15 +91,7 @@ class GiphySearch {
 		});
 	}
 
-	getPreviousPage() {
-		this.searchOffset = Math.max(0,this.searchOffset-=10);
-		this.retrieveGifs(this.currentSearchTerm);
-	}
 
-	getNextPage() {
-		this.searchOffset += 10;
-		this.retrieveGifs(this.currentSearchTerm);
-	}
 
 	displayGifs(responseList) {
 		$('#gif-container').empty();
@@ -105,6 +100,7 @@ class GiphySearch {
 			$('#gif-container').text('Sorry, no results found!');
 		}
 
+	
 		responseList.data.forEach((gif) => {
 			let newGifWrapper = $('<div>', {
 				'class': 'gif-wrapper'
@@ -113,6 +109,8 @@ class GiphySearch {
 			let newGif = $('<img>', {
 				src: gif.images.fixed_height_still.url,
 				'class': 'displayed-gif',
+				'alt': gif.title,
+				'title': gif.title,
 				click: (event) => {
 					this.toggleGifAnimation(event.target);
 				}
@@ -130,7 +128,30 @@ class GiphySearch {
 
 		//Store search result count
 		this.resultCount = responseList.pagination.total_count;
+		//Round down results so last page is a whole page
+		//Will cut off some results but the last page is likely irrelevant to the search given
+		this.numberOfPages = Math.floor(this.resultCount/10);
+		
+		this.updatePageControls();
+	}
 
+	goToPage(targetPage) {
+		this.currentPageNumber = targetPage;
+		this.searchOffset = targetPage * 10;
+		this.retrieveGifs(this.currentSearchTerm);
+	}
+	
+	getPreviousPage() {
+		this.currentPageNumber--;
+		this.goToPage(this.currentPageNumber);
+	}
+
+	getNextPage() {
+		this.currentPageNumber++;
+		this.goToPage(this.currentPageNumber);
+	}
+
+	updatePageControls() {	
 		//Handle next/previous page buttons
 		if (this.searchOffset === 0) {
 			$('#previous-page-button').hide();
@@ -144,13 +165,48 @@ class GiphySearch {
 		} else {
 			$('#next-page-button').show();
 		}
+
+		//Empty current goto buttons
+		$('#goto-page-controls-wrapper').empty();
+
+		//Create up to 10 buttons for pages
+		//Start buttons at 0, or current page-4
+		let pageOptionStart = Math.max(0,this.currentPageNumber-4);
+		//End buttons at page+5, or 9 if page is 0, and limit to number of pages
+		let pageOptionEnd = Math.min(Math.max(9,this.currentPageNumber+5),this.numberOfPages);
+
+		for(let i = pageOptionStart; i <= pageOptionEnd; i++) {
+			let newPageButton = $('<input>', {
+				'type': 'button',
+				'class': i === this.currentPageNumber ? 'goto-page-button active-page' : 'goto-page-button',
+				'data-page': i,
+				'value': i+1
+							
+			});
+			
+			$('#goto-page-controls-wrapper').append(newPageButton);
+		}
+
+		//Listen for click on each page button
+		$('.goto-page-button').on('click', (event) => {
+			//Get page data
+			let targetPage = $(event.target).attr('data-page');
+			//Pass page as int to goToPage
+			this.goToPage(parseInt(targetPage));
+		});
+
+		//Set active page button class
+		$('.goto-page-button').find(`[data-page='${this.currentPageNumber}']`).addClass('active-page');
+
+		//Display number of results
+		$('.results-count-display').text(`${this.resultCount} Results`);
 	}
 
 	toggleGifAnimation(element) {
 		let src = $(element).attr('src');
 
 		if (src.indexOf('_s.gif') === -1) {
-			//This gif is animated, so stop animated
+			//This gif is animated, so stop animation
 			src = src.split('.gif');
 			src[0] += '_s.gif';
 		} else {
@@ -174,7 +230,7 @@ $('#add-term-button').on('click', (event) => {
 	let searchTerm = displayTerm.replace(' ', '+');
 	//Clear input field
 	$('#term-input-field').val('');
-
+	console.log(displayTerm);
 	searchApp.addNewButton(displayTerm);
 });
 
