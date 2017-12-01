@@ -4,16 +4,23 @@ body {
 }
 
 nav {
-	background-color: #1E263D;	
+	background-color: #1E263D;
+	width: 100%;	
+}
+
+.content {
+	width: 95vw;
+	margin: 0 auto;
 }
 
 .title-text {
 	text-align: center;
-	font-size: 25px;
 	padding: 10px;
+	font-size: 25px;
 }
 
 .search-form {
+	width: 100%;
 	text-align: center;
 	font-size: 20px;
 	margin: 10px 0;
@@ -27,7 +34,16 @@ nav {
 	border-color:  #1E263D;
 }
 
-.goto-page-button.active-page {
+.goto-page-button:focus,
+#next-page-button:focus,
+#previous-page-button:focus {
+	outline: none;
+}
+
+.goto-page-button.active-page,
+.goto-page-button:hover,
+#next-page-button:hover,
+#previous-page-button:hover{
 	background-color: #1E263D;
 	color: #969FBD;
 }
@@ -65,6 +81,7 @@ nav {
 }
 
 #gif-container {
+	width: 95vw;
 	display: flex;
 	flex-flow: row wrap;
 	justify-content: center;
@@ -81,6 +98,14 @@ nav {
 
 .gif-wrapper img {
 	border: 3px solid #1E263D;
+	transition: all .25s ease-out;	
+}
+
+.gif-wrapper img:hover {
+	box-shadow: 3px 3px 5px 0px rgba(30,38,61,.5);		
+	transform: scale(1.25);
+	transition: all .25s ease-in;
+	z-index: 1;
 }
 
 .close-button {

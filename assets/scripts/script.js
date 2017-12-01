@@ -110,7 +110,6 @@ class GiphySearch {
 				src: gif.images.fixed_height_still.url,
 				'class': 'displayed-gif',
 				'alt': gif.title,
-				'title': gif.title,
 				click: (event) => {
 					this.toggleGifAnimation(event.target);
 				}
