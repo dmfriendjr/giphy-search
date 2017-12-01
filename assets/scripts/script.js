@@ -5,6 +5,7 @@ class GiphySearch {
 		this.searchTermList = [];
 		this.currentSearchTerm = "";
 		this.resultsPerPage = 10;
+		this.displayRatings = true;
 		this.initialized = false;
 		this.searchOffset = 0;
 		this.resultCount;
@@ -19,6 +20,7 @@ class GiphySearch {
 			}
 		});
 
+		//Add event listener for next/previous page buttons
 		$('#next-page-button').on('click', (event) => {
 			this.getNextPage();
 		});
@@ -27,6 +29,7 @@ class GiphySearch {
 			this.getPreviousPage();
 		});
 		
+		//Add event listener for add term button click/submit
 		$('#add-term-button').on('click', (event) => {
 			//Prevent submit button from refreshing page
 			event.preventDefault();
@@ -38,6 +41,19 @@ class GiphySearch {
 			$('#term-input-field').val('');
 			//Add new button
 			this.addNewButton(displayTerm);
+		});
+
+		$('#display-ratings').change((event) => {
+			this.displayRatings = $(event.target).prop('checked');
+			if (!this.displayRatings) {
+				//Remove all current ratings displayed
+				$('.gif-rating').each( (index,rating) => {
+					rating.remove();	
+				});
+			} else {
+				//Not storing ratings anywhere, have to re-request the gifs
+				this.retrieveGifs(this.currentSearchTerm);
+			}
 		});
 	}
 
@@ -147,12 +163,17 @@ class GiphySearch {
 				}
 			});
 
-			let newGifRating = $('<span>', {
+
+			newGifWrapper.append(newGif);
+
+			if (this.displayRatings) {
+				let newGifRating = $('<span>', {
 				'class': 'gif-rating',
 				text: `Rating: ${gif.rating.toUpperCase()}`
-			});
-			newGifWrapper.append(newGif);
-			newGifWrapper.append(newGifRating);
+				});
+
+				newGifWrapper.append(newGifRating);
+			}
 
 			$('#gif-container').append(newGifWrapper);	
 		});
@@ -205,35 +226,38 @@ class GiphySearch {
 		//Empty current goto buttons
 		$('#goto-page-controls-wrapper').empty();
 
-		//Create up to 10 buttons for pages
-		//Start buttons at 0, or current page-4
-		let pageOptionStart = Math.max(0,this.currentPageNumber-4);
-		//End buttons at page+5, or 9 if page is 0, and limit to number of pages
-		let pageOptionEnd = Math.min(Math.max(9,this.currentPageNumber+5),this.numberOfPages);
+		//Only display page number buttons if there are results
+		if (this.resultCount > 0)
+		{
+			//Create up to 10 buttons for pages
+			//Start buttons at 0, or current page-4
+			let pageOptionStart = Math.max(0,this.currentPageNumber-4);
+			//End buttons at page+5, or 9 if page is 0, and limit to number of pages
+			let pageOptionEnd = Math.min(Math.max(9,this.currentPageNumber+5),this.numberOfPages);
 
-		for(let i = pageOptionStart; i <= pageOptionEnd; i++) {
-			let newPageButton = $('<input>', {
-				'type': 'button',
-				'class': i === this.currentPageNumber ? 'goto-page-button active-page' : 'goto-page-button',
-				'data-page': i,
-				'value': i+1
-							
+			for(let i = pageOptionStart; i <= pageOptionEnd; i++) {
+				let newPageButton = $('<input>', {
+					'type': 'button',
+					'class': i === this.currentPageNumber ? 'goto-page-button active-page' : 'goto-page-button',
+					'data-page': i,
+					'value': i+1
+								
+				});
+				
+				$('#goto-page-controls-wrapper').append(newPageButton);
+			}
+
+			//Listen for click on each page button
+			$('.goto-page-button').on('click', (event) => {
+				//Get page data
+				let targetPage = $(event.target).attr('data-page');
+				//Pass page as int to goToPage
+				this.goToPage(parseInt(targetPage));
 			});
-			
-			$('#goto-page-controls-wrapper').append(newPageButton);
+
+			//Set active page button class
+			$('.goto-page-button').find(`[data-page='${this.currentPageNumber}']`).addClass('active-page');
 		}
-
-		//Listen for click on each page button
-		$('.goto-page-button').on('click', (event) => {
-			//Get page data
-			let targetPage = $(event.target).attr('data-page');
-			//Pass page as int to goToPage
-			this.goToPage(parseInt(targetPage));
-		});
-
-		//Set active page button class
-		$('.goto-page-button').find(`[data-page='${this.currentPageNumber}']`).addClass('active-page');
-
 		//Display number of results
 		$('.results-count-display').text(`${this.resultCount} Results`);
 	}

@@ -26,6 +26,10 @@ nav {
 	margin: 10px 0;
 }
 
+.settings-wrapper {
+	margin: 0 0 10px 0;
+}
+
 #add-term-button, 
 .goto-page-button,
 #next-page-button,
@@ -97,6 +101,7 @@ nav {
 	display: flex;
 	flex-flow: row wrap;
 	justify-content: center;
+	margin-top: 15px;
 }
 
 
@@ -105,7 +110,7 @@ nav {
 	flex-direction: column;
 	justify-content: center;
 	text-align: center;
-	margin: 15px 5px;
+	margin: 5px 5px;
 }
 
 .gif-wrapper img {
