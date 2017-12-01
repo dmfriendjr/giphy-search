@@ -41,6 +41,7 @@ class GiphySearch {
 		});
 	}
 
+	//Creates search buttons from premade list of terms
 	populateButtons() {
 		$('#button-container').empty();
 			this.startingTermList.forEach((term) => {
@@ -61,6 +62,7 @@ class GiphySearch {
 		return string.replace('&', '+');
 	}
 
+	//Adds a new button to the button list if it doesn't already exist, and searches the term
 	addNewButton(term) {
 		//Check if term exists
 		if (this.searchTermList.indexOf(term) !== -1) {
@@ -104,6 +106,7 @@ class GiphySearch {
 		}
 	}
 
+	//Does ajax request to giphy api for the given term
 	retrieveGifs(term) {
 		//Store current search term
 		this.currentSearchTerm = term;
@@ -121,7 +124,7 @@ class GiphySearch {
 	}
 
 
-
+	//Takes giphy api data response and appends each gif to the html, or displays no results found if there were no results
 	displayGifs(responseList) {
 		$('#gif-container').empty();
 		if (responseList.data.length === 0) {
@@ -156,29 +159,34 @@ class GiphySearch {
 
 		//Store search result count
 		this.resultCount = responseList.pagination.total_count;
-		//Round down results so last page is a whole page
-		//Will cut off some results but the last page is likely irrelevant to the search given
+
+		//Round down number of pages so it is an integer
 		this.numberOfPages = Math.floor(this.resultCount/this.resultsPerPage);
 		
+		//Update page number navigation controls
 		this.updatePageControls();
 	}
 
+	//Changes currentPageNumber and searchOffset then retrieves gifs for current search term
 	goToPage(targetPage) {
 		this.currentPageNumber = targetPage;
 		this.searchOffset = targetPage * this.resultsPerPage;
 		this.retrieveGifs(this.currentSearchTerm);
 	}
 	
+	//Decrements page number by one and goes to that page
 	getPreviousPage() {
 		this.currentPageNumber--;
 		this.goToPage(this.currentPageNumber);
 	}
 
+	//Increments page number by one and goes to that page
 	getNextPage() {
 		this.currentPageNumber++;
 		this.goToPage(this.currentPageNumber);
 	}
 
+	//Handles enabling/disabling next previous page button and displaying goto page number buttons based on number of results
 	updatePageControls() {	
 		//Handle next/previous page buttons
 		if (this.searchOffset === 0) {
@@ -230,6 +238,7 @@ class GiphySearch {
 		$('.results-count-display').text(`${this.resultCount} Results`);
 	}
 
+	//Toggles the gif animation of given element to the opposite state, animate -> still || still -> animate
 	toggleGifAnimation(element) {
 		let src = $(element).attr('src');
 

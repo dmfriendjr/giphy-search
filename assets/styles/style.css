@@ -29,14 +29,16 @@ nav {
 #add-term-button, 
 .goto-page-button,
 #next-page-button,
-#previous-page-button {
+#previous-page-button,
+#number-results {
 	background-color: #5D75BD;
 	border-color:  #1E263D;
 }
 
 .goto-page-button:focus,
 #next-page-button:focus,
-#previous-page-button:focus {
+#previous-page-button:focus,
+#number-results:focus {
 	outline: none;
 }
 
@@ -66,7 +68,17 @@ nav {
 	box-shadow: 2px 2px 1px 0px rgba(30,38,61,.5);
 	padding: 15px;
 	margin: 5px;
-	
+}
+
+.button-wrapper:hover {
+	color: #969FBD;
+	transition: color .25s ease-in;
+}
+
+.button-wrapper:active {
+  	box-shadow: inset 0 0 3px rgba(30,38,61,.5);
+	color: #969FBD;
+	transition: box-shadow .25s ease-in;
 }
 
 .close-button {
