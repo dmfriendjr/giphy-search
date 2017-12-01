@@ -3,13 +3,21 @@ class GiphySearch {
 		this.apiKey = '2nT5ws7Ip0CIL05uELndCzdjrVZy9nuH';
 		this.startingTermList =  ['dogs','cats','wolves','elephants','mice','rhinos','hippos','ants', 'german shepherd'];
 		this.searchTermList = [];
-		this.currentSearchTerm;
+		this.currentSearchTerm = "";
+		this.resultsPerPage = 10;
 		this.initialized = false;
 		this.searchOffset = 0;
 		this.resultCount;
 		this.numberOfPages;
 		this.currentPageNumber = 0;
 		this.populateButtons();	
+
+		$('#number-results').change((event) => {
+			this.resultsPerPage = parseInt($(event.target).val());
+			if (this.currentSearchTerm.length !== 0) {
+				this.retrieveGifs(this.currentSearchTerm);
+			}
+		});
 	}
 
 	populateButtons() {
@@ -80,7 +88,7 @@ class GiphySearch {
 		this.currentSearchTerm = term;
 
 		//Construct query string using term and API key
-		let queryString = `https://api.giphy.com/v1/gifs/search?&q=${term}&limit=10&offset=${this.searchOffset}&api_key=${this.apiKey}`
+		let queryString = `https://api.giphy.com/v1/gifs/search?&q=${term}&limit=${this.resultsPerPage}&offset=${this.searchOffset}&api_key=${this.apiKey}`
 
 		//Do request and display results after response is recieved
 		$.ajax({
@@ -129,14 +137,14 @@ class GiphySearch {
 		this.resultCount = responseList.pagination.total_count;
 		//Round down results so last page is a whole page
 		//Will cut off some results but the last page is likely irrelevant to the search given
-		this.numberOfPages = Math.floor(this.resultCount/10);
+		this.numberOfPages = Math.floor(this.resultCount/this.resultsPerPage);
 		
 		this.updatePageControls();
 	}
 
 	goToPage(targetPage) {
 		this.currentPageNumber = targetPage;
-		this.searchOffset = targetPage * 10;
+		this.searchOffset = targetPage * this.resultsPerPage;
 		this.retrieveGifs(this.currentSearchTerm);
 	}
 	
@@ -158,7 +166,7 @@ class GiphySearch {
 			$('#previous-page-button').show();
 		}
 
-		if (this.searchOffset + 10 > this.resultCount) {
+		if (this.searchOffset + this.resultsPerPage > this.resultCount) {
 			//At the end of the results, no next page
 			$('#next-page-button').hide();
 		} else {
