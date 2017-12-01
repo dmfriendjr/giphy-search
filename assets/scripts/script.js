@@ -18,6 +18,27 @@ class GiphySearch {
 				this.retrieveGifs(this.currentSearchTerm);
 			}
 		});
+
+		$('#next-page-button').on('click', (event) => {
+			this.getNextPage();
+		});
+
+		$('#previous-page-button').on('click', (event) => {
+			this.getPreviousPage();
+		});
+		
+		$('#add-term-button').on('click', (event) => {
+			//Prevent submit button from refreshing page
+			event.preventDefault();
+			
+			//Get display and search term formatted correctly for each purpose
+			let displayTerm = $('#term-input-field').val();
+			let searchTerm = displayTerm.replace(' ', '+');
+			//Clear input field
+			$('#term-input-field').val('');
+			//Add new button
+			this.addNewButton(displayTerm);
+		});
 	}
 
 	populateButtons() {
@@ -228,23 +249,4 @@ class GiphySearch {
 
 let searchApp = new GiphySearch();
 
-$('#add-term-button').on('click', (event) => {
-	//Prevent submit button from refreshing page
-	event.preventDefault();
-	
-	//Get display and search term formatted correctly for each purpose
-	let displayTerm = $('#term-input-field').val();
-	let searchTerm = displayTerm.replace(' ', '+');
-	//Clear input field
-	$('#term-input-field').val('');
-	console.log(displayTerm);
-	searchApp.addNewButton(displayTerm);
-});
 
-$('#next-page-button').on('click', (event) => {
-	searchApp.getNextPage();
-});
-
-$('#previous-page-button').on('click', (event) => {
-	searchApp.getPreviousPage();
-});
