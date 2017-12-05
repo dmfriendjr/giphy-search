@@ -22,11 +22,11 @@ class GiphySearch {
 		});
 
 		$('#next-page-button').on('click', (event) => {
-			this.getNextPage();
+			this.goToPage(this.currentPageNumber + 1);
 		});
 
 		$('#previous-page-button').on('click', (event) => {
-			this.getPreviousPage();
+			this.goToPage(this.currentPageNumber - 1);	
 		});
 		
 		//Add event listener for add term button click/submit
@@ -62,8 +62,16 @@ class GiphySearch {
 
 	//Creates search buttons from premade list of terms
 	populateButtons() {
+		//Retrieve term list
+		let termList; 
+		if (localStorage.getItem('searchTerms') === null) {
+			termList = this.startingTermList;
+		} else {
+			termList = localStorage.getItem('searchTerms').split(',');
+		}
+
 		$('#button-container').empty();
-			this.startingTermList.forEach((term) => {
+			termList.forEach((term) => {
 			this.addNewButton(term);
 		});
 
@@ -75,32 +83,35 @@ class GiphySearch {
 		$('#previous-page-button').hide();
 	}
 
-	//Removes any special characters etc. in string provided
+	//Remove problematic characters
 	processString(string) {
-		//Remove ampersands and replace with concatenation so it doesnt break query string
-		return string.replace('&', '+');
+		string = string.replace(/&/g, '+');
+		return string.replace(/,/g, ' ');
 	}
 
+
 	//Adds a new button to the button list if it doesn't already exist, and searches the term
-	addNewButton(term) {
+	addNewButton(term) {	
+		let searchTerm = this.processString(term);
+
 		if (this.searchTermList.indexOf(term) !== -1) {
 			//Already exists in list, just do a search
-			this.retrieveGifs(this.processString(term));
+			this.retrieveGifs(searchTerm);
 			return;
 		}
 		
-		let searchTerm = this.processString(term);
 		this.searchTermList.push(searchTerm);
 		
 		let newButton = $(`
 			<div class='button-wrapper' data-term='${searchTerm}'>
-				<i class="fa fa-times-circle close-button" aria-hidden="true"></i>		
 				<p class='button-label'>${term}</p>
+				<i class="fa fa-times-circle close-button" aria-hidden="true"></i>		
 			</div>`);
 		
 		//Add event listener for click on close button to remove element from list
 		newButton.children('.close-button').on('click', (event) => {
 				this.searchTermList.splice(this.searchTermList.indexOf($(event.target.parentElement).attr('data-term')),1);
+				this.saveStartingButtons();
 				$(event.target.parentElement).remove();
 			});
 
@@ -117,6 +128,14 @@ class GiphySearch {
 		//Only retrieve gifs after initial buttons added
 		if (this.initialized) {
 			this.retrieveGifs(searchTerm);
+			this.saveStartingButtons();
+		}
+	}
+
+	saveStartingButtons() {
+		localStorage.clear();
+		if (this.searchTermList.length > 0) {
+			localStorage.setItem('searchTerms',this.searchTermList.toString());
 		}
 	}
 
@@ -140,14 +159,25 @@ class GiphySearch {
 			$('#gif-container').text('Sorry, no results found!');
 		}
 
-	
+		//Get screen viewport width
+		let width = $(window).width();
+
+
+
 		responseList.data.forEach((gif) => {
+			let sourceUrl;
+			if (width < 1200) {
+				sourceUrl = this.autoplayGifs ? gif.images.fixed_width.url : gif.images.fixed_width_still.url
+			} else {
+				sourceUrl = this.autoplayGifs ? gif.images.fixed_height.url : gif.images.fixed_height_still.url
+			}
+
 			let newGifWrapper = $('<div>', {
 				'class': 'gif-wrapper'
 			});
 
 			let newGif = $('<img>', {
-				src: this.autoplayGifs ? gif.images.fixed_height.url : gif.images.fixed_height_still.url,
+				src: sourceUrl,
 				'class': 'displayed-gif',
 				'alt': gif.title,
 				click: (event) => {
@@ -178,22 +208,39 @@ class GiphySearch {
 		this.updatePageControls();
 	}
 
+	toggleGifAnimation(element, forcePlay, forcePause) {
+		let src = $(element).attr('src');
+
+		let rawSrc = src.slice(0,src.indexOf('.gif'));
+
+		if (rawSrc.indexOf('_s') === -1) {
+			//This was animated
+			if (forcePlay) {
+				//Force play, so dont add _s
+				rawSrc += '.gif';
+			} else {
+				rawSrc += '_s.gif';
+			}
+		} else {
+			//This was not animated
+			if (forcePause) {
+				//Force pause, so don't strip _s
+				rawSrc += '.gif';
+			} else {
+				rawSrc = rawSrc.slice(0,rawSrc.indexOf('_s'));
+				rawSrc += '.gif';
+			}
+		}
+
+		$(element).attr('src',rawSrc);
+	}	
+	
 	goToPage(targetPage) {
 		this.currentPageNumber = targetPage;
 		this.searchOffset = targetPage * this.resultsPerPage;
 		this.retrieveGifs(this.currentSearchTerm);
 	}
 	
-	getPreviousPage() {
-		this.currentPageNumber--;
-		this.goToPage(this.currentPageNumber);
-	}
-
-	getNextPage() {
-		this.currentPageNumber++;
-		this.goToPage(this.currentPageNumber);
-	}
-
 	updatePageControls() {	
 		//Handle next/previous page buttons
 		if (this.searchOffset === 0) {
@@ -243,33 +290,6 @@ class GiphySearch {
 		}
 
 		$('.results-count-display').text(`${this.resultCount} Results`);
-	}
-
-	toggleGifAnimation(element, forcePlay, forcePause) {
-		let src = $(element).attr('src');
-
-		let rawSrc = src.slice(0,src.indexOf('.gif'));
-
-		if (rawSrc.indexOf('_s') === -1) {
-			//This was animated
-			if (forcePlay) {
-				//Force play, so dont add _s
-				rawSrc += '.gif';
-			} else {
-				rawSrc += '_s.gif';
-			}
-		} else {
-			//This was not animated
-			if (forcePause) {
-				//Force pause, so don't strip _s
-				rawSrc += '.gif';
-			} else {
-				rawSrc = rawSrc.slice(0,rawSrc.indexOf('_s'));
-				rawSrc += '.gif';
-			}
-		}
-
-		$(element).attr('src',rawSrc);
 	}
 }
 

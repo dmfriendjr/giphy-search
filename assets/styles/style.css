@@ -6,7 +6,7 @@ body {
 
 nav {
 	background-color: #1E263D;
-	width: 100%;	
+	width: 100vw;	
 }
 
 .content {
@@ -63,10 +63,7 @@ nav {
 }
 
 .button-wrapper {
-	display: flex;
-	flex-direction: column;
 	position: relative;
-	align-items: center;
 	width: fit-content;
 	height: 25px;
 	background-color: #5D75BD;
@@ -100,7 +97,7 @@ nav {
 }
 
 #gif-container {
-	width: 95vw;
+	width: 90vw;
 	display: flex;
 	flex-flow: row wrap;
 	justify-content: center;
@@ -114,11 +111,12 @@ nav {
 	justify-content: center;
 	text-align: center;
 	margin: 5px 5px;
+	max-width: 95vw;
 }
 
 .gif-wrapper img {
 	border: 3px solid #1E263D;
-	transition: all .25s ease-out;	
+	transition: all .25s ease-out;
 }
 
 .gif-wrapper img:hover {
@@ -150,3 +148,26 @@ nav {
 	margin-top: 5px;
 	color: 
 }
+
+@media screen and (max-width: 1200px) {
+	label {
+		display: block;
+	}
+
+	.button-wrapper {
+		height: 10px;
+		line-height: 2.5px;
+	}
+
+	.close-button {
+		position: static;
+		display: inline-block;
+	}
+
+	.button-label {
+		display: inline-block;
+		font-size: 14px;
+		padding: 5px;
+	}
+}
+
