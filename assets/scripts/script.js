@@ -21,7 +21,6 @@ class GiphySearch {
 			}
 		});
 
-		//Add event listener for next/previous page buttons
 		$('#next-page-button').on('click', (event) => {
 			this.getNextPage();
 		});
@@ -46,21 +45,17 @@ class GiphySearch {
 
 		$('#display-ratings').change((event) => {
 			this.displayRatings = $(event.target).prop('checked');
-			if (!this.displayRatings) {
-				//Remove all current ratings displayed
-				$('.gif-rating').each( (index,rating) => {
-					rating.remove();	
-				});
-			} else {
-				//Not storing ratings anywhere, have to re-request the gifs
-				this.retrieveGifs(this.currentSearchTerm);
-			}
+			//Toggle ratings display show/hide based on checkbox value
+			$('.gif-rating').each( (index,rating) => {
+				this.displayRatings? $(rating).show() : $(rating).hide();	
+			});
+
 		});
 
 		$('#autoplay-gifs').change((event) => {
 			this.autoplayGifs = $(event.target).prop('checked');
 			$('.displayed-gif').each( (index, gif) => {
-				this.toggleGifAnimation(gif);	
+				this.toggleGifAnimation(gif, this.autoplayGifs, !this.autoplayGifs);	
 			});
 		});
 	}
@@ -88,17 +83,15 @@ class GiphySearch {
 
 	//Adds a new button to the button list if it doesn't already exist, and searches the term
 	addNewButton(term) {
-		//Check if term exists
 		if (this.searchTermList.indexOf(term) !== -1) {
-			//Already exists in list
+			//Already exists in list, just do a search
+			this.retrieveGifs(this.processString(term));
 			return;
 		}
 		
-		//Add term to list after formatting
 		let searchTerm = this.processString(term);
 		this.searchTermList.push(searchTerm);
 		
-		//Create button for element and insert term display label and data-term 
 		let newButton = $(`
 			<div class='button-wrapper' data-term='${searchTerm}'>
 				<i class="fa fa-times-circle close-button" aria-hidden="true"></i>		
@@ -119,26 +112,19 @@ class GiphySearch {
 				this.retrieveGifs($(event.target).attr('data-term'));	
 			});
 
-		//Append button to HTML
 		$('#button-container').append(newButton);	
-		
-		//Check if initialization of starting buttons have been added
-		//doing a query for every button added to prevent making a ton of requests
-		//the user won't see
+	
+		//Only retrieve gifs after initial buttons added
 		if (this.initialized) {
 			this.retrieveGifs(searchTerm);
 		}
 	}
 
-	//Does ajax request to giphy api for the given term
 	retrieveGifs(term) {
-		//Store current search term
 		this.currentSearchTerm = term;
 
-		//Construct query string using term and API key
 		let queryString = `https://api.giphy.com/v1/gifs/search?&q=${term}&limit=${this.resultsPerPage}&offset=${this.searchOffset}&api_key=${this.apiKey}`
 
-		//Do request and display results after response is recieved
 		$.ajax({
 			url: queryString,
 			method: 'GET'
@@ -147,8 +133,6 @@ class GiphySearch {
 		});
 	}
 
-
-	//Takes giphy api data response and appends each gif to the html, or displays no results found if there were no results
 	displayGifs(responseList) {
 		$('#gif-container').empty();
 		if (responseList.data.length === 0) {
@@ -167,7 +151,7 @@ class GiphySearch {
 				'class': 'displayed-gif',
 				'alt': gif.title,
 				click: (event) => {
-					this.toggleGifAnimation(event.target);
+					this.toggleGifAnimation(event.target, false, false);
 				}
 			});
 
@@ -186,36 +170,30 @@ class GiphySearch {
 			$('#gif-container').append(newGifWrapper);	
 		});
 
-		//Store search result count
 		this.resultCount = responseList.pagination.total_count;
 
-		//Round down number of pages so it is an integer
+		//Round down number of pages since our pages start at 0, not 1
 		this.numberOfPages = Math.floor(this.resultCount/this.resultsPerPage);
 		
-		//Update page number navigation controls
 		this.updatePageControls();
 	}
 
-	//Changes currentPageNumber and searchOffset then retrieves gifs for current search term
 	goToPage(targetPage) {
 		this.currentPageNumber = targetPage;
 		this.searchOffset = targetPage * this.resultsPerPage;
 		this.retrieveGifs(this.currentSearchTerm);
 	}
 	
-	//Decrements page number by one and goes to that page
 	getPreviousPage() {
 		this.currentPageNumber--;
 		this.goToPage(this.currentPageNumber);
 	}
 
-	//Increments page number by one and goes to that page
 	getNextPage() {
 		this.currentPageNumber++;
 		this.goToPage(this.currentPageNumber);
 	}
 
-	//Handles enabling/disabling next previous page button and displaying goto page number buttons based on number of results
 	updatePageControls() {	
 		//Handle next/previous page buttons
 		if (this.searchOffset === 0) {
@@ -231,7 +209,6 @@ class GiphySearch {
 			$('#next-page-button').show();
 		}
 
-		//Empty current goto buttons
 		$('#goto-page-controls-wrapper').empty();
 
 		//Only display page number buttons if there are results
@@ -257,34 +234,42 @@ class GiphySearch {
 
 			//Listen for click on each page button
 			$('.goto-page-button').on('click', (event) => {
-				//Get page data
 				let targetPage = $(event.target).attr('data-page');
-				//Pass page as int to goToPage
 				this.goToPage(parseInt(targetPage));
 			});
 
 			//Set active page button class
 			$('.goto-page-button').find(`[data-page='${this.currentPageNumber}']`).addClass('active-page');
 		}
-		//Display number of results
+
 		$('.results-count-display').text(`${this.resultCount} Results`);
 	}
 
-	//Toggles the gif animation of given element to the opposite state, animate -> still || still -> animate
-	toggleGifAnimation(element) {
+	toggleGifAnimation(element, forcePlay, forcePause) {
 		let src = $(element).attr('src');
 
-		if (src.indexOf('_s.gif') === -1 ) {
-			//This gif is animated, so stop animation
-			src = src.split('.gif');
-			src[0] += '_s.gif';
+		let rawSrc = src.slice(0,src.indexOf('.gif'));
+
+		if (rawSrc.indexOf('_s') === -1) {
+			//This was animated
+			if (forcePlay) {
+				//Force play, so dont add _s
+				rawSrc += '.gif';
+			} else {
+				rawSrc += '_s.gif';
+			}
 		} else {
-			//This gif is not animted, animate it
-			src = src.split('_s.gif');
-			src[0] += '.gif';
+			//This was not animated
+			if (forcePause) {
+				//Force pause, so don't strip _s
+				rawSrc += '.gif';
+			} else {
+				rawSrc = rawSrc.slice(0,rawSrc.indexOf('_s'));
+				rawSrc += '.gif';
+			}
 		}
 
-		$(element).attr('src',src[0]);
+		$(element).attr('src',rawSrc);
 	}
 }
 
