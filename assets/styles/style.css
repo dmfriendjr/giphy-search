@@ -150,20 +150,6 @@ nav {
 	color: 
 }
 
-@media screen and (max-width: 768px) {
-	label {
-		display: block;
-	}
-
-	#next-page-button,
-	#previous-page-button {
-		display: block;
-		margin: 5px auto;
-	}
-	
-}
-	
-
 @media screen and (max-width: 1200px) {
 
 	.button-wrapper {
@@ -182,4 +168,20 @@ nav {
 		padding: 5px;
 	}
 }
+
+@media screen and (max-width: 768px) {
+	label {
+		display: block;
+	}
+
+	#next-page-button,
+	#previous-page-button {
+		display: block;
+		margin: 5px auto;
+	}
+	
+}
+	
+
+
 

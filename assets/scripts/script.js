@@ -165,26 +165,32 @@ class GiphySearch {
 
 
 		responseList.data.forEach((gif) => {
-			let sourceUrl;
+			let sourceUrlStill;
+			let sourceUrlAnimate;
 			if (width < 1200) {
-				sourceUrl = this.autoplayGifs ? gif.images.fixed_width.url : gif.images.fixed_width_still.url
+				sourceUrlStill = gif.images.fixed_width_still.url;
+				sourceUrlAnimate = gif.images.fixed_width.url;
 			} else {
-				sourceUrl = this.autoplayGifs ? gif.images.fixed_height.url : gif.images.fixed_height_still.url
+				sourceUrlStill = gif.images.fixed_height_still.url;
+				sourceUrlAnimate = gif.images.fixed_height.url;
 			}
 
 			let newGifWrapper = $('<div>', {
 				'class': 'gif-wrapper'
 			});
 
+
 			let newGif = $('<img>', {
-				src: sourceUrl,
+				src: this.autoplayGifs ? sourceUrlAnimate : sourceUrlStill,
+				'data-animated': this.autoplayGifs,
+				'data-url-still': sourceUrlStill,
+				'data-url-animate': sourceUrlAnimate,
 				'class': 'displayed-gif',
 				'alt': gif.title,
 				click: (event) => {
 					this.toggleGifAnimation(event.target, false, false);
 				}
 			});
-
 
 			newGifWrapper.append(newGif);
 
@@ -202,37 +208,29 @@ class GiphySearch {
 
 		this.resultCount = responseList.pagination.total_count;
 
+		//Giphy API limits offset to 5000, so max offset request can be 4999-resultsToDisplay		
 		//Round down number of pages since our pages start at 0, not 1
-		this.numberOfPages = Math.floor(this.resultCount/this.resultsPerPage);
-		
+		let maxOffset = Math.min(this.resultCount,(4999-this.resultsPerPage));
+		this.numberOfPages = Math.floor(maxOffset/this.resultsPerPage);
 		this.updatePageControls();
 	}
 
 	toggleGifAnimation(element, forcePlay, forcePause) {
-		let src = $(element).attr('src');
-
-		let rawSrc = src.slice(0,src.indexOf('.gif'));
-
-		if (rawSrc.indexOf('_s') === -1) {
-			//This was animated
-			if (forcePlay) {
-				//Force play, so dont add _s
-				rawSrc += '.gif';
-			} else {
-				rawSrc += '_s.gif';
-			}
+		let gifIsAnimated = $(element).attr('data-animated');
+	
+		//Do nothing if gif already meets force mode requirements
+		if ( (gifIsAnimated === 'true' && forcePlay) ||(gifIsAnimated === 'false' && forcePause )) {
+			return;
 		} else {
-			//This was not animated
-			if (forcePause) {
-				//Force pause, so don't strip _s
-				rawSrc += '.gif';
+			//Toggle animation
+			if (gifIsAnimated === 'true') {
+				$(element).attr('src', $(element).attr('data-url-still'));
+				$(element).attr('data-animated', false);
 			} else {
-				rawSrc = rawSrc.slice(0,rawSrc.indexOf('_s'));
-				rawSrc += '.gif';
+				$(element).attr('src', $(element).attr('data-url-animate'));
+				$(element).attr('data-animated', true);
 			}
 		}
-
-		$(element).attr('src',rawSrc);
 	}	
 	
 	goToPage(targetPage) {
@@ -242,14 +240,13 @@ class GiphySearch {
 	}
 	
 	updatePageControls() {	
-		//Handle next/previous page buttons
 		if (this.searchOffset === 0) {
 			$('#previous-page-button').hide();
 		} else {
 			$('#previous-page-button').show();
 		}
 
-		if (this.searchOffset + this.resultsPerPage > this.resultCount) {
+		if (this.currentPageNumber >= this.numberOfPages) {
 			//At the end of the results, no next page
 			$('#next-page-button').hide();
 		} else {
@@ -261,7 +258,6 @@ class GiphySearch {
 		//Only display page number buttons if there are results
 		if (this.resultCount > 0)
 		{
-			//Create up to 10 buttons for pages
 			//Start buttons at 0, or current page-3
 			let pageOptionStart = Math.max(0,this.currentPageNumber-3);
 			//End buttons at page+4, or 8 if page is 0, and limit to number of pages
@@ -298,21 +294,22 @@ class GiphySearch {
 			}
 
 			//Create shortcut button to last page
-			let newPageButton = $('<input>', {
-				'type': 'button',
-				'class': 'goto-page-button',
-				'data-page': this.numberOfPages,
-				'value': this.numberOfPages+1		
-			});
+			if(pageOptionEnd < this.numberOfPages) {
+				let newPageButton = $('<input>', {
+					'type': 'button',
+					'class': 'goto-page-button',
+					'data-page': this.numberOfPages,
+					'value': this.numberOfPages+1		
+				});
 
 
-			let shortcutIndication = $('<span>', {
-				text: '...'
-			});
+				let shortcutIndication = $('<span>', {
+					text: '...'
+				});
 
-			$('#goto-page-controls-wrapper').append(shortcutIndication);
-			$('#goto-page-controls-wrapper').append(newPageButton);
-
+				$('#goto-page-controls-wrapper').append(shortcutIndication);
+				$('#goto-page-controls-wrapper').append(newPageButton);
+			}
 
 			//Listen for click on each page button
 			$('.goto-page-button').on('click', (event) => {
