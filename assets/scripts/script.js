@@ -262,10 +262,28 @@ class GiphySearch {
 		if (this.resultCount > 0)
 		{
 			//Create up to 10 buttons for pages
-			//Start buttons at 0, or current page-4
-			let pageOptionStart = Math.max(0,this.currentPageNumber-4);
-			//End buttons at page+5, or 9 if page is 0, and limit to number of pages
-			let pageOptionEnd = Math.min(Math.max(9,this.currentPageNumber+5),this.numberOfPages);
+			//Start buttons at 0, or current page-3
+			let pageOptionStart = Math.max(0,this.currentPageNumber-3);
+			//End buttons at page+4, or 8 if page is 0, and limit to number of pages
+			let pageOptionEnd = Math.min(Math.max(7,this.currentPageNumber+3),this.numberOfPages);
+
+			if (pageOptionStart > 1) { 
+				//Display shortcut button to first page
+				let newPageButton = $('<input>', {
+					'type': 'button',
+					'class': 'goto-page-button',
+					'data-page': 0,
+					'value': 1		
+				});
+
+
+				let shortcutIndication = $('<span>', {
+					text: '...'
+				});
+
+				$('#goto-page-controls-wrapper').append(newPageButton);
+				$('#goto-page-controls-wrapper').append(shortcutIndication);	
+			}
 
 			for(let i = pageOptionStart; i <= pageOptionEnd; i++) {
 				let newPageButton = $('<input>', {
@@ -278,6 +296,23 @@ class GiphySearch {
 				
 				$('#goto-page-controls-wrapper').append(newPageButton);
 			}
+
+			//Create shortcut button to last page
+			let newPageButton = $('<input>', {
+				'type': 'button',
+				'class': 'goto-page-button',
+				'data-page': this.numberOfPages,
+				'value': this.numberOfPages+1		
+			});
+
+
+			let shortcutIndication = $('<span>', {
+				text: '...'
+			});
+
+			$('#goto-page-controls-wrapper').append(shortcutIndication);
+			$('#goto-page-controls-wrapper').append(newPageButton);
+
 
 			//Listen for click on each page button
 			$('.goto-page-button').on('click', (event) => {
